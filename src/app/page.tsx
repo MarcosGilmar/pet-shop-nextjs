@@ -1,8 +1,16 @@
-
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <h2>PETSHOP</h2>
+    <div className="bg-background-primary p-6">
+      <div className="flex items-center justify-between md:m-8">
+        <div className="">
+          <h1 className="text-title-size text-content-primary mb-2">
+            Sua agenda
+          </h1>
+          <p className="text-paragraph-small-size text-content-secondary">
+            Aqui você pode ver todos os clientes e serviços agendados para hoje.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
