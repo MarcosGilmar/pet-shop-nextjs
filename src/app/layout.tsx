@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import '@/styles/globals.css';
-import { inter, interTight } from '@/utils/fonts';
+import { inter, interTight } from '@/types/fonts';
 
 export const metadata: Metadata = {
   title: 'Mundo Pet',
