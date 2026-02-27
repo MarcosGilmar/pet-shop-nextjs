@@ -32,7 +32,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { IMaskInput } from 'react-imask';
-import { format, setHours, setMinutes, startOfToday } from 'date-fns';
+import {
+  format,
+  setHours,
+  setISODay,
+  setMinutes,
+  startOfToday,
+} from 'date-fns';
 import {
   Popover,
   PopoverContent,
@@ -48,6 +54,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { createAppointment, uptadeAppointment } from '@/app/actions';
+import { useEffect, useState } from 'react';
+import { Appointment } from '@/types/appointment';
 
 const appointmentSchema = z
   .object({
@@ -82,7 +91,17 @@ const appointmentSchema = z
 
 type AppointmentFormValues = z.infer<typeof appointmentSchema>;
 
-export function AppointmentForm() {
+type AppointmentFormProps = {
+  children?: React.ReactNode;
+  appointment?: Appointment;
+};
+
+export function AppointmentForm({
+  children,
+  appointment,
+}: AppointmentFormProps) {
+  const [isOpen, setIsOpen] = useState(false);
+
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentSchema),
     defaultValues: {
@@ -95,14 +114,37 @@ export function AppointmentForm() {
     },
   });
 
-  function onSubmit(data: AppointmentFormValues) {
+  async function onSubmit(data: AppointmentFormValues) {
     const [hour, minute] = data.time.split(':');
 
     const scheduleAt = new Date(data.scheduleAt);
 
     scheduleAt.setHours(Number(hour), Number(minute), 0, 0);
 
-    toast.success('Agendamento criado com sucesso!');
+    const isEditing = !!appointment?.id;
+
+    const result = isEditing
+      ? await uptadeAppointment(appointment.id, {
+          ...data,
+          scheduleAt,
+        })
+      : await createAppointment({
+          ...data,
+          scheduleAt,
+        });
+
+    if (result?.error) {
+      toast.error(result.error);
+      return;
+    }
+
+    toast.success(
+      `Agendamento ${isEditing ? 'atualizado' : 'criado'} com sucesso!`
+    );
+
+    setIsOpen(false);
+
+    form.reset();
   }
 
   const generateTimeOptions = () => {
@@ -120,11 +162,17 @@ export function AppointmentForm() {
 
   const TIME_OPTIONS = generateTimeOptions();
 
+  useEffect(() => {
+    if (isOpen && appointment) {
+      form.reset(appointment);
+    } else if (!isOpen && !appointment) {
+      form.reset();
+    }
+  }, [isOpen, appointment, form]);
+
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="brand">Novo agendamento</Button>
-      </DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
 
       <DialogContent
         variant="appointment"

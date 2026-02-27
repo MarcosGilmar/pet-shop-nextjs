@@ -1,13 +1,13 @@
 import { AppointmentForm } from '@/components/appointment-form';
 import { PeriodSection } from '@/components/period-section';
+import { Button } from '@/components/ui/button';
 import { prisma } from '@/lib/prisma';
 import { groupAppointmentsByPeriod } from '@/utils/appointment-utils';
-import { HARDCODED_APPOINTMENT_DATA } from '@/utils/mock-data';
 
 export default async function Home() {
-  const periods = groupAppointmentsByPeriod(HARDCODED_APPOINTMENT_DATA);
+  const appointments = await prisma.appointment.findMany();
 
-  // const appoints = await prisma.appointment.findMany();
+  const periods = groupAppointmentsByPeriod(appointments);
 
   return (
     <div className="bg-background-primary p-6">
@@ -31,7 +31,11 @@ export default async function Home() {
         md:top-auto md:w-auto md:bg-transparent md:p-0
         "
       >
-        <AppointmentForm />
+        <div className="text-right mt-2 md:mt-0 col-span-2 md:col-span-1 flex justify-end">
+          <AppointmentForm>
+            <Button variant="brand">Novo agendamento</Button>
+          </AppointmentForm>
+        </div>
       </div>
     </div>
   );
