@@ -1,17 +1,37 @@
 import { AppointmentForm } from '@/components/appointment-form';
+import { DatePicker } from '@/components/date-picker';
 import { PeriodSection } from '@/components/period-section';
 import { Button } from '@/components/ui/button';
 import { prisma } from '@/lib/prisma';
 import { groupAppointmentsByPeriod } from '@/utils/appointment-utils';
+import { endOfDay, parseISO, startOfDay } from 'date-fns';
 
-export default async function Home() {
-  const appointments = await prisma.appointment.findMany();
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ date?: string }>;
+}) {
+  const { date } = await searchParams;
+
+  const selectedDate = date ? parseISO(date) : new Date();
+
+  const appointments = await prisma.appointment.findMany({
+    where: {
+      scheduleAt: {
+        gte: startOfDay(selectedDate),
+        lte: endOfDay(selectedDate),
+      },
+    },
+    orderBy: {
+      scheduleAt: 'asc',
+    },
+  });
 
   const periods = groupAppointmentsByPeriod(appointments);
 
   return (
     <div className="bg-background-primary p-6">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-8 gap-4">
         <div className="">
           <h1 className="text-title-size text-content-primary mb-2">
             Sua agenda
@@ -20,6 +40,13 @@ export default async function Home() {
             Aqui você pode ver todos os clientes e serviços agendados para hoje.
           </p>
         </div>
+        <div className="hidden md:flex items-center gap-">
+          <DatePicker />
+        </div>
+      </div>
+
+      <div className="mb-8 md:hidden">
+        <DatePicker />
       </div>
 
       <PeriodSection period={periods} />
@@ -31,7 +58,7 @@ export default async function Home() {
         md:top-auto md:w-auto md:bg-transparent md:p-0
         "
       >
-        <div className="text-right mt-2 md:mt-0 col-span-2 md:col-span-1 flex justify-end">
+        <div className="text-right mt-2 md:mt-0 py-4 col-span-2 md:col-span-1 flex justify-end">
           <AppointmentForm>
             <Button variant="brand">Novo agendamento</Button>
           </AppointmentForm>
